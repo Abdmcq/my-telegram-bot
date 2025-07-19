@@ -1,19 +1,16 @@
-// index.js
-
-// 1. استيراد المكتبة اللازمة للتواصل مع تليجرام
-// ستحتاج إلى تثبيتها لاحقًا باستخدام الأمر: npm install node-telegram-bot-api
+// 1. استيراد المكتبات اللازمة
 const TelegramBot = require('node-telegram-bot-api');
+const express = require('express'); // المكتبة الجديدة للخادم
 
-// 2. ضع التوكن الذي حصلت عليه من BotFather هنا
-// الأفضل هو وضعه كمتغير بيئة (Environment Variable) عند الرفع على الخادم
-const token = '7674083224:AAHfuIU8AkFF1sRH_ddhA0ls7AyLjwKFZkU';
+// 2. إعداد المتغيرات الأساسية
+const token = 'YOUR_TELEGRAM_BOT_TOKEN'; // ضع التوكن الخاص بك هنا
+const port = process.env.PORT || 3000; // المنفذ الذي ستستمع إليه الخدمة
 
-// 3. إنشاء نسخة من البوت
+// 3. إنشاء نسخة من البوت وتطبيق الخادم
 const bot = new TelegramBot(token, { polling: true });
+const app = express(); // إنشاء تطبيق الخادم
 
-// --- نسخ خوارزميات التشفير وفك التشفير من موقعك (V6) ---
-// هذه هي نفس الدوال بالضبط لضمان التوافق الكامل بين الموقع والبوت
-
+// --- خوارزميات التشفير وفك التشفير (تبقى كما هي) ---
 function customEncrypt(text, complexity) {
     let currentText = text;
     for (let i = 0; i < complexity; i++) {
@@ -58,10 +55,18 @@ function customDecrypt(encryptedText) {
 }
 // --- نهاية قسم الخوارزميات ---
 
+// 4. إعداد الخادم للرد على Uptime Robot
+// هذا هو الجزء الجديد والمهم
+app.get('/', (req, res) => {
+    res.send('Bot is alive and running!');
+});
 
-// 4. برمجة الأوامر التي سيستجيب لها البوت
+// 5. تشغيل الخادم للاستماع للطلبات
+app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+});
 
-// أمر /start للترحيب بالمستخدم
+// 6. برمجة أوامر البوت (تبقى كما هي)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `
@@ -79,7 +84,6 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'Markdown' });
 });
 
-// أمر /encrypt للتشفير
 bot.onText(/\/encrypt (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const parts = match[1].split(' ');
@@ -105,7 +109,6 @@ bot.onText(/\/encrypt (.+)/, (msg, match) => {
     }
 });
 
-// أمر /decrypt لفك التشفير
 bot.onText(/\/decrypt (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const textToDecrypt = match[1];
@@ -118,5 +121,5 @@ bot.onText(/\/decrypt (.+)/, (msg, match) => {
     }
 });
 
-console.log('Bot is running...');
+console.log('Bot is running and server is listening...');
 
