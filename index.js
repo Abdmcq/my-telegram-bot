@@ -1,14 +1,36 @@
 // 1. استيراد المكتبات اللازمة
 const TelegramBot = require('node-telegram-bot-api');
-const express = require('express'); // المكتبة الجديدة للخادم
+const express = require('express');
 
 // 2. إعداد المتغيرات الأساسية
-const token = 'YOUR_TELEGRAM_BOT_TOKEN'; // ضع التوكن الخاص بك هنا
-const port = process.env.PORT || 3000; // المنفذ الذي ستستمع إليه الخدمة
+// تأكد من وضع التوكن الصحيح هنا
+const token = 'YOUR_TELEGRAM_BOT_TOKEN'; 
+// هذا هو رابط الخدمة الخاص بك من Render
+const url = 'https://my-telegram-bot-bkgs.onrender.com'; 
+const port = process.env.PORT || 3000;
 
-// 3. إنشاء نسخة من البوت وتطبيق الخادم
-const bot = new TelegramBot(token, { polling: true });
-const app = express(); // إنشاء تطبيق الخادم
+// 3. إنشاء نسخة من البوت (بدون Polling) وتطبيق الخادم
+const bot = new TelegramBot(token);
+const app = express();
+
+// استخدام express.json() لقراءة البيانات القادمة من تليجرام
+app.use(express.json());
+
+// 4. إعداد الـ Webhook
+// نخبر تليجرام أين يرسل التحديثات
+bot.setWebHook(`${url}/bot${token}`);
+
+// 5. إنشاء مسار لاستقبال التحديثات من تليجرام
+// هذا هو الجزء الذي يستقبل الرسائل
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200); // نرسل رداً لتأكيد الاستلام
+});
+
+// 6. تشغيل الخادم للاستماع للطلبات
+app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+});
 
 // --- خوارزميات التشفير وفك التشفير (تبقى كما هي) ---
 function customEncrypt(text, complexity) {
@@ -55,22 +77,12 @@ function customDecrypt(encryptedText) {
 }
 // --- نهاية قسم الخوارزميات ---
 
-// 4. إعداد الخادم للرد على Uptime Robot
-// هذا هو الجزء الجديد والمهم
-app.get('/', (req, res) => {
-    res.send('Bot is alive and running!');
-});
 
-// 5. تشغيل الخادم للاستماع للطلبات
-app.listen(port, () => {
-    console.log(`Server is listening on port ${port}`);
-});
-
-// 6. برمجة أوامر البوت (تبقى كما هي)
+// 7. برمجة أوامر البوت (تبقى كما هي)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `
-أهلاً بك في بوت التشفير الخاص بـ عبدالرحمن حسن!
+أهلاً بك في بوت التشفير الخاص بـ عبدالرحمن حسن! (إصدار Webhook)
 
 استخدم الأوامر التالية:
 - لتشفير نص:
@@ -121,5 +133,5 @@ bot.onText(/\/decrypt (.+)/, (msg, match) => {
     }
 });
 
-console.log('Bot is running and server is listening...');
+console.log('Bot is running in webhook mode...');
 
