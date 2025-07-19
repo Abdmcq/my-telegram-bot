@@ -2,29 +2,40 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 
-// 2. إعداد المتغيرات الأساسية
-// تأكد من وضع التوكن الصحيح هنا
-const token = 'YOUR_TELEGRAM_BOT_TOKEN'; 
-// هذا هو رابط الخدمة الخاص بك من Render
-const url = 'https://my-telegram-bot-bkgs.onrender.com'; 
+// 2. إعداد المتغيرات الأساسية من بيئة العمل (Render)
+// سيتم قراءة هذه المتغيرات من إعدادات Render لاحقاً
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const url = process.env.RENDER_EXTERNAL_URL;
 const port = process.env.PORT || 3000;
 
-// 3. إنشاء نسخة من البوت (بدون Polling) وتطبيق الخادم
+// التحقق من وجود التوكن. إذا لم يكن موجوداً، سيتوقف البوت.
+if (!token) {
+  console.error('CRITICAL ERROR: TELEGRAM_BOT_TOKEN is not defined in environment variables!');
+  process.exit(1);
+}
+
+// 3. إنشاء نسخة من البوت وتطبيق الخادم
 const bot = new TelegramBot(token);
 const app = express();
+
+// 4. إعداد الـ Webhook
+// نخبر تليجرام أين يرسل التحديثات
+// سيتم هذا فقط إذا كان الرابط موجوداً (أي عند التشغيل على Render)
+if (url) {
+    bot.setWebHook(`${url}/bot${token}`);
+    console.log(`Webhook set to ${url}/bot${token}`);
+} else {
+    console.log('Could not set webhook. RENDER_EXTERNAL_URL not found. Bot will not work on a server.');
+}
+
 
 // استخدام express.json() لقراءة البيانات القادمة من تليجرام
 app.use(express.json());
 
-// 4. إعداد الـ Webhook
-// نخبر تليجرام أين يرسل التحديثات
-bot.setWebHook(`${url}/bot${token}`);
-
 // 5. إنشاء مسار لاستقبال التحديثات من تليجرام
-// هذا هو الجزء الذي يستقبل الرسائل
 app.post(`/bot${token}`, (req, res) => {
   bot.processUpdate(req.body);
-  res.sendStatus(200); // نرسل رداً لتأكيد الاستلام
+  res.sendStatus(200);
 });
 
 // 6. تشغيل الخادم للاستماع للطلبات
