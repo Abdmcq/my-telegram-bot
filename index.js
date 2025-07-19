@@ -3,14 +3,13 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 
 // 2. إعداد المتغيرات الأساسية من بيئة العمل (Render)
-// سيتم قراءة هذه المتغيرات من إعدادات Render لاحقاً
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const url = process.env.RENDER_EXTERNAL_URL;
 const port = process.env.PORT || 3000;
 
-// التحقق من وجود التوكن. إذا لم يكن موجوداً، سيتوقف البوت.
+// التحقق من وجود التوكن
 if (!token) {
-  console.error('CRITICAL ERROR: TELEGRAM_BOT_TOKEN is not defined in environment variables!');
+  console.error('CRITICAL ERROR: TELEGRAM_BOT_TOKEN is not defined!');
   process.exit(1);
 }
 
@@ -18,27 +17,29 @@ if (!token) {
 const bot = new TelegramBot(token);
 const app = express();
 
-// 4. إعداد الـ Webhook
-// نخبر تليجرام أين يرسل التحديثات
-// سيتم هذا فقط إذا كان الرابط موجوداً (أي عند التشغيل على Render)
-if (url) {
-    bot.setWebHook(`${url}/bot${token}`);
-    console.log(`Webhook set to ${url}/bot${token}`);
-} else {
-    console.log('Could not set webhook. RENDER_EXTERNAL_URL not found. Bot will not work on a server.');
-}
-
-
 // استخدام express.json() لقراءة البيانات القادمة من تليجرام
 app.use(express.json());
 
-// 5. إنشاء مسار لاستقبال التحديثات من تليجرام
+// 4. إعداد الـ Webhook
+if (url) {
+    bot.setWebHook(`${url}/bot${token}`);
+    console.log(`Webhook set to ${url}/bot${token}`);
+}
+
+// --- الجزء الجديد لإصلاح Uptime Robot ---
+// 5. إنشاء مسار للصفحة الرئيسية للرد على Uptime Robot
+app.get('/', (req, res) => {
+    res.send('Hello from the bot! I am alive and well.');
+});
+// --- نهاية الجزء الجديد ---
+
+// 6. إنشاء مسار لاستقبال التحديثات من تليجرام
 app.post(`/bot${token}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-// 6. تشغيل الخادم للاستماع للطلبات
+// 7. تشغيل الخادم للاستماع للطلبات
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
@@ -89,7 +90,7 @@ function customDecrypt(encryptedText) {
 // --- نهاية قسم الخوارزميات ---
 
 
-// 7. برمجة أوامر البوت (تبقى كما هي)
+// 8. برمجة أوامر البوت (تبقى كما هي)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `
@@ -144,5 +145,5 @@ bot.onText(/\/decrypt (.+)/, (msg, match) => {
     }
 });
 
-console.log('Bot is running in webhook mode...');
+console.log('Bot is running in webhook mode and ready for pings...');
 
