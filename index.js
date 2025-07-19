@@ -58,25 +58,25 @@ function customEncrypt(text, complexity) {
         const base64String = btoa(unescape(encodeURIComponent(currentText)));
         return `ARv6-${complexity}-${base64String}`;
     } catch (e) {
-        throw new Error("حدث خطأ أثناء ترميز النص.");
+        throw new Error("صار خطأ بالتشفير.");
     }
 }
 
 function customDecrypt(encryptedText) {
     if (!encryptedText.startsWith('ARv6-')) {
-        throw new Error("صيغة النص المشفر غير صالحة أو تالفة.");
+        throw new Error("صيغة النص المشفر بيها غلط.");
     }
     const parts = encryptedText.split('-');
     const complexity = parseInt(parts[1], 10);
     const base64String = parts.slice(2).join('-');
     if (isNaN(complexity)) {
-         throw new Error("مستوى التعقيد في النص المشفر غير صالح.");
+         throw new Error("مستوى التشفير الخاص غير صالح.");
     }
     let currentText;
     try {
          currentText = decodeURIComponent(escape(atob(base64String)));
     } catch (e) {
-        throw new Error("النص المشفر تالف ولا يمكن فك ترميزه.");
+        throw new Error("النص المشفر تالف.");
     }
     for (let i = complexity - 1; i >= 0; i--) {
         currentText = Array.from(currentText).map((char, index) => {
@@ -94,14 +94,13 @@ function customDecrypt(encryptedText) {
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `
-أهلاً بك في بوت التشفير الخاص بـ عبدالرحمن حسن! (إصدار Webhook)
-
+حياكم الله وبياكم المطور عبد وياكم 
 استخدم الأوامر التالية:
 - لتشفير نص:
-/encrypt <مستوى التعقيد> <النص المراد تشفيره>
-مثال: \`/encrypt 5 السلام عليكم\`
+/encrypt 
+مثال: \`/encrypt 5 عبدالرحمن \`
 
-- لفك تشفير نص:
+- لفك تشفير النص:
 /decrypt <النص المشفر>
 مثال: \`/decrypt ARv6-5-....\`
     `;
@@ -113,7 +112,7 @@ bot.onText(/\/encrypt (.+)/, (msg, match) => {
     const parts = match[1].split(' ');
     
     if (parts.length < 2) {
-        bot.sendMessage(chatId, 'خطأ: الصيغة غير صحيحة. الرجاء استخدام:\n/encrypt <التعقيد> <النص>');
+        bot.sendMessage(chatId, 'عندك خطأ عزيزي الصيغة مو صحيحة:\n/encrypt ');
         return;
     }
 
@@ -121,7 +120,7 @@ bot.onText(/\/encrypt (.+)/, (msg, match) => {
     const textToEncrypt = parts.slice(1).join(' ');
 
     if (isNaN(complexity) || complexity < 1 || complexity > 10) {
-        bot.sendMessage(chatId, 'خطأ: مستوى التعقيد يجب أن يكون رقمًا بين 1 و 10.');
+        bot.sendMessage(chatId, 'مستوى التشفير الخاص لازم يكون ضمن 10 مستويات بس');
         return;
     }
 
@@ -139,11 +138,10 @@ bot.onText(/\/decrypt (.+)/, (msg, match) => {
 
     try {
         const decryptedText = customDecrypt(textToDecrypt);
-        bot.sendMessage(chatId, `✅ *النص الأصلي:*\n${decryptedText}`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ *النص بعد فك التشفير:*\n${decryptedText}`, { parse_mode: 'Markdown' });
     } catch (e) {
         bot.sendMessage(chatId, `حدث خطأ: ${e.message}`);
     }
 });
 
 console.log('Bot is running in webhook mode and ready for pings...');
-
